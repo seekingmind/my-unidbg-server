@@ -76,7 +76,7 @@ public class ShopeeSGAfAcEncServiceWorker extends Worker {
 
     @Async
     @SneakyThrows
-    public CompletableFuture<String> ShopeeSGAfAcEncId() {
+    public CompletableFuture<String> callWvvvuvvvVuwuuwvu(String reqParamName, int wvvvuwuw, String wvvvuwuu) {
         ShopeeSGAfAcEncServiceWorker worker;
         String result;
         if (this.unidbgProperties.isAsync()) {
@@ -84,13 +84,13 @@ public class ShopeeSGAfAcEncServiceWorker extends Worker {
                 if ((worker = pool.borrow(2, TimeUnit.SECONDS)) == null) {
                     continue;
                 }
-                result = worker.doAfAcEncIdWork();
+                result = worker.doWvvvuvvvVuwuuwvuWork(reqParamName, wvvvuwuw, wvvvuwuu);
                 pool.release(worker);
                 break;
             }
         } else {
             synchronized (this) {
-                result = this.doAfAcEncIdWork();
+                result = this.doWvvvuvvvVuwuuwvuWork(reqParamName, wvvvuwuw, wvvvuwuu);
             }
         }
 
@@ -103,8 +103,8 @@ public class ShopeeSGAfAcEncServiceWorker extends Worker {
         return shopeeSGAfAcEncService.getAfAcEncDat();
     }
 
-    private String doAfAcEncIdWork() {
-        return shopeeSGAfAcEncService.getAfAcEncId();
+    private String doWvvvuvvvVuwuuwvuWork(String reqParamName, int wvvvuwuw, String wvvvuwuu) {
+        return shopeeSGAfAcEncService.callWvvvuvvvVuwuuwvu(reqParamName, wvvvuwuw, wvvvuwuu);
     }
 
     @SneakyThrows

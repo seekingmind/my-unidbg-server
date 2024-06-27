@@ -46,6 +46,12 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
     public String wvvvuvvv_wvvvuwwu = "";
     public int wvvvuvvv_wvvvuwuv = 0;
 
+    // 当前要请求参数是哪个
+    // 因为主要的方法逻辑基本都在重写的方法里，没办法自定义传入参数，所以需要用类成员来存储变量
+    public String currentReqParamName = "";
+    public int wvvvuwuw = 0;
+    public String wvvvuwuu = "";
+
     @SneakyThrows
     ShopeeSGAfAcEncService(UnidbgProperties unidbgProperties) {
         DEBUG_FLAG = unidbgProperties.isVerbose();
@@ -155,8 +161,8 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
         hook.replace(module.base + 0x92d65, new ReplaceCallback() {
             @Override
             public HookStatus onCall(Emulator<?> emulator, HookContext context, long originFunction) {
-                emulator.getBackend().reg_write(Unicorn.UC_ARM_REG_R0,1000.0);
-                return HookStatus.RET(emulator,context.getLR());
+                emulator.getBackend().reg_write(Unicorn.UC_ARM_REG_R0, 1000.0);
+                return HookStatus.RET(emulator, context.getLR());
             }
         });
     }
@@ -318,8 +324,11 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
         }
 
         if (signature.equals("com/shopee/shpssdk/wvvvuvvv->wvvvuwuu:Ljava/lang/String;")) {  // 获取java层的wvvvuvvv类的wvvvuwuu成员变量，该成员变量的值就是envinfo
-            //TODO: 这里是从 java 对象中传递过来的一个变量，获取 af-ac-enc-id 时，传入的时 envInfo，也就是 af-ac-enc-dat，获取 af-ac-enc-sz-token 时，传入的是 {"token":"2adcd4ebc113545a35b7470b586057ca8"}
-            return new StringObject(vm, envInfoData);
+            if (this.currentReqParamName.equals("afAcEncId")) {
+                return new StringObject(vm, envInfoData);
+            } else if (this.currentReqParamName.equals("afAcEncSzToken")) {
+                return new StringObject(vm, this.wvvvuwuu);
+            }
         }
 
         return super.getObjectField(vm, dvmObject, signature);
@@ -332,8 +341,11 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
         }
 
         if (signature.equals("com/shopee/shpssdk/wvvvuvvv->wvvvuwuw:I")) {
-            //TODO: 这里是从java对象中传递过来的一个变量，获取 af-ac-enc-id 时，传入的是 20483，获取 af-ac-enc-sz-token 时，传入的是 65530
-            return 20483;
+            if (this.currentReqParamName.equals("afAcEncId")) {
+                return 20483;
+            } else if (this.currentReqParamName.equals("afAcEncSzToken")) {
+                return 65530;
+            }
         }
 
         return super.getIntField(vm, dvmObject, signature);
@@ -481,6 +493,7 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
      * 生成请求头中的 af-ac-enc-dat 加密参数，这个参数就是 envInfo
      * RegisterNative(com/shopee/shpssdk/wvvvuwwu, vuwuuvwu(Landroid/content/Context;Z)Ljava/lang/String;, RX@0x401a41c9[libshpssdk.so]0x1a41c9)
      * 调用 vuwuuvwu(Landroid/content/Context;Z)Ljava/lang/String，函数地址 0x1a41c8
+     *
      * @return
      */
     public String getAfAcEncDat() {
@@ -493,7 +506,7 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
         list.add(1);
 
         // 调用函数
-        Number[] numbers = new Number[]{module.callFunction(emulator, 0x1a41c8+1, list.toArray())};
+        Number[] numbers = new Number[]{module.callFunction(emulator, 0x1a41c8 + 1, list.toArray())};
         DvmObject<?> object = vm.getObject(numbers[0].intValue());
         String value = (String) object.getValue();
         envInfoData = value;
@@ -504,11 +517,17 @@ public class ShopeeSGAfAcEncService extends AbstractJni implements IOResolver {
     /**
      * 生成请求头中的 af-ac-enc-id，af-ac-enc-sz-token
      * 获取不同的值，就是因为传入的参数不同
+     * 猜测so代码中，是根据传入的 wvvvuwuw 值，走不同的生成逻辑，会不会是另一种控制流程混淆呢？
      * 对应安卓端的代码是 public static native int vuwuuwvu(wvvvuvvv wvvvuvvvVar);
      * native 层 registerNative 为：
      * RegisterNative(com/shopee/shpssdk/wvvvuwwu, vuwuuwvu(Lcom/shopee/shpssdk/wvvvuvvv;)I, RX@0x402e5fd5[libshpssdk.so]0x1a5fd5)
      */
-    public String getAfAcEncId() {
+    public String callWvvvuvvvVuwuuwvu(String reqParamName, int wvvvuwuw, String wvvvuwuu) {
+        // 先赋值一下传入参数到类成员变量中
+        this.currentReqParamName = reqParamName;
+        this.wvvvuwuw = wvvvuwuw;
+        this.wvvvuwuu = wvvvuwuu;
+
         List<Object> list = new ArrayList<>(10);
         list.add(vm.getJNIEnv());
         list.add(0);
